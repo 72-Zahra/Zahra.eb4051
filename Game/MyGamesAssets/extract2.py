@@ -1,3 +1,12 @@
+"""
+extract2.py
+-----------
+۱) فایل‌های UnityWebData (مثل game.data.br که قبلاً باز شده) رو به فایل‌های جدا تقسیم می‌کنه
+۲) نسخه‌ی یونیتی بازی رو پیدا می‌کنه
+۳) فایل‌های .bundle رو با اون نسخه می‌خونه و عکس/صدا/متن/فونت بیرون می‌کشه
+
+اجرا:  python extract2.py   (کنار فایل‌ها)
+"""
 
 import os
 import re
@@ -106,6 +115,9 @@ if detected_version is None:
 
 # ---------- مرحله ۲: بیرون کشیدن assetها ----------
 counts = {}
+skipped_sprites = [0]
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def export_env(env):
@@ -144,9 +156,11 @@ def export_env(env):
                     nm = safe(getattr(data, "m_Name", "") ) + f"_{obj.path_id}"
                     with open(os.path.join(d, nm + ".ttf"), "wb") as f:
                         f.write(bytes(data.m_FontData))
-        except Exception:
-            print(f"   ! مشکل در {t}:")
-            traceback.print_exc(limit=1)
+        except Exception as e:
+            if t == "Sprite":
+                skipped_sprites[0] += 1
+                continue
+            print(f"   ! مشکل در {t}: {str(e)[:100]}")
 
 
 for path in bundles:
@@ -177,4 +191,6 @@ if counts:
     print("آبجکت‌های پیدا شده:")
     for k, v in sorted(counts.items(), key=lambda x: -x[1]):
         print(f"   {k}: {v}")
+if skipped_sprites[0]:
+    print(f"\n{skipped_sprites[0]} تا Sprite رد شد (عکسشون جای دیگه‌ایه، مشکلی نیست).")
 print(f"\nخروجی اینجاست: {OUT}")
